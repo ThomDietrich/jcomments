@@ -237,6 +237,21 @@ class JCommentsAJAX
 							$response->addScript("jcomments.clear('captcha');");
 							return $response;
 						}
+					} else if ($captchaEngine == 'recaptcha') {
+						$post = JRequest::get('post');
+						//$post = JFactory::getApplication()->input->post;
+						JPluginHelper::importPlugin('captcha');
+						$dispatcher = JDispatcher::getInstance();
+						//$dispatcher = JEventDispatcher::getInstance();
+						$res = $dispatcher->trigger('onCheckAnswer',$post['recaptcha_response_field']);
+						if(!$res[0]){
+						//	die('Invalid Captcha');
+							self::showErrorMessage(JText::_('ERROR_CAPTCHA'), 'captcha');
+							$response->addScript("Recaptcha.reload()");
+							return $response;
+						} else {
+							$response->addScript("Recaptcha.reload()");
+						}
 					} else {
 						$result = JCommentsEventHelper::trigger('onJCommentsCaptchaVerify', array($values['captcha_refid'], &$response));
 						// if all plugins returns false

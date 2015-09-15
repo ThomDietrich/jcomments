@@ -11,6 +11,9 @@
 
 defined('_JEXEC') or die;
 
+JHtml::_('behavior.keepalive');
+JHtml::_('behavior.formvalidator');
+
 /**
  * Comments form template
  */
@@ -126,17 +129,28 @@ class jtt_tpl_form extends JoomlaTuneTemplate
 		}
 
 		if ($this->getVar('comments-form-captcha', 0) == 1) {
-			$html = $this->getVar('comments-form-captcha-html');
-			if ($html != '') {
-				echo $html;
-			} else {
+			$html = $this->getVar('comments-form-captcha-html','kcaptcha');
+			if ($html == 'kcaptcha') {
 				$link = JCommentsFactory::getLink('captcha');
+
 ?>
 <p>
 	<span>
 		<img class="captcha" onclick="jcomments.clear('captcha');" id="comments-form-captcha-image" src="<?php echo $link; ?>" width="121" height="60" alt="<?php echo JText::_('FORM_CAPTCHA'); ?>" /><br />
 		<span class="captcha" onclick="jcomments.clear('captcha');"><?php echo JText::_('FORM_CAPTCHA_REFRESH'); ?></span><br />
 		<input class="captcha" id="comments-form-captcha" type="text" name="captcha_refid" value="" size="5" tabindex="6" /><br />
+	</span>
+</p>
+<?php
+			} else {
+				$link = JCommentsFactory::getLink('captcha');
+				JPluginHelper::importPlugin('captcha');
+				$dispatcher = JDispatcher::getInstance();
+				$dispatcher->trigger('onInit','dynamic_recaptcha_1');
+?>
+<p>
+	<span>
+		<div id="dynamic_recaptcha_1"></div>
 	</span>
 </p>
 <?php
