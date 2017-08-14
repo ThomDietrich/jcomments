@@ -306,19 +306,37 @@ class JCommentsModel
 			$where[] = $filter;
 		}
 
-		$query = "SELECT c.id, c.parent, c.object_id, c.object_group, c.userid, c.name, c.username, c.title, c.comment"
-				. "\n, c.email, c.homepage, c.date, c.date as datetime, c.ip, c.published, c.deleted, c.checked_out, c.checked_out_time"
-				. "\n, c.isgood, c.ispoor"
-				. ($votes ? "\n, v.value as voted" : "\n, 1 as voted")
-				. "\n, case when c.parent = 0 then unix_timestamp(c.date) else 0 end as threaddate"
-				. ($objectinfo ? "\n, jo.title AS object_title, jo.link AS object_link, jo.access AS object_access" : ", '' AS object_title, '' AS object_link, 0 AS object_access, 0 AS object_owner")
-				. "\nFROM #__jcomments AS c"
-				. ($votes ? "\nLEFT JOIN #__jcomments_votes AS v ON c.id = v.commentid " . ($acl->getUserId() ? " AND  v.userid = " . $acl->getUserId() : " AND v.userid = 0 AND v.ip = '" . $acl->getUserIP() . "'") : "")
-				. ($objectinfo ? "\n LEFT JOIN #__jcomments_objects AS jo ON jo.object_id = c.object_id AND jo.object_group = c.object_group AND jo.lang=c.lang" : "")
-				. (count($where) ? ("\nWHERE " . implode(' AND ', $where)) : "")
-				. "\nORDER BY " . $orderBy
-				. (($limit > 0) ? "\nLIMIT $limitStart, $limit" : "");
-
+		$query = $db->getQuery(true);
+		$query->select('c.id, c.parent, c.object_id, c.object_group, c.userid, c.name, c.username, c.title, c.comment')
+			->select('c.email, c.homepage, c.date, c.date as datetime, c.ip, c.published, c.deleted, c.checked_out')
+			->select('c.checked_out_time, c.isgood, c.ispoor')
+			->select($votes ? 'v.value as voted' : '1 as voted');
+		switch ($db->getServerType()) {
+			case 'postgresql' :
+				$query->select('case when c.parent = 0 then (SELECT extract(epoch FROM c.date)) else 0 end as threaddate');
+				break;
+			case 'mysql' :
+			case 'mysqli' :
+				$query->select('case when c.parent = 0 then UNIX_TIMESTAMP(c.date) else 0 end as threaddate');
+				break;
+			default :
+				//TODO
+		}
+		$query->select($objectinfo ? "jo.title AS object_title, jo.link AS object_link, jo.access AS object_access" : "'' AS object_title, '' AS object_link, 0 AS object_access, 0 AS object_owner");
+		$query->from($db->quoteName('#__jcomments') . ' AS c');
+		if ($votes) {
+			$query->join('LEFT', $db->quoteName('#__jcomments_votes') . ' AS v ON c.id = v.commentid' . ($acl->getUserId() ? " AND  v.userid = " . $acl->getUserId() : " AND v.userid = 0 AND v.ip = '" . $acl->getUserIP() . "'"));
+		}
+		if ($objectinfo) {
+			$query->join('LEFT', $db->quoteName('#__jcomments_objects') . ' AS jo ON jo.object_id = c.object_id AND jo.object_group = c.object_group AND jo.lang=c.lang');
+		}
+		if (count($where)) {
+			$query->where(implode(' AND ', $where));
+		}
+		$query->order($orderBy);
+		if ($limit > 0) {
+			$query->setLimit($limit, $limitStart);
+		}
 		return $query;
 	}
 

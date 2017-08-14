@@ -356,14 +356,19 @@ class JCommentsNotificationHelper
 			default:
 				$db = JFactory::getDbo();
 
-				$query = "SELECT DISTINCTROW js.`name`, js.`email`, js.`hash`, js.`userid` "
-					. " FROM #__jcomments_subscriptions AS js"
-					. " JOIN #__jcomments_objects AS jo ON js.object_id = jo.object_id AND js.object_group = jo.object_group"
-					. " WHERE js.`object_group` = " . $db->Quote($object_group)
-					. " AND js.`object_id` = " . intval($object_id)
-					. " AND js.`published` = 1 "
-					. (JCommentsMultilingual::isEnabled() ? " AND js.`lang` = " . $db->Quote($lang) : '')
-					. (JCommentsMultilingual::isEnabled() ? " AND jo.`lang` = " . $db->Quote($lang) : '');
+				$query = $db->getQuery(true);
+				$query->select('DISTINCT js.name, js.email, js.hash, js.userid');
+				$query->from($db->quoteName('#__jcomments_subscriptions') . ' AS js');
+				$query->join('LEFT', $db->quoteName('#__jcomments_objects', 'jo') . ' ON ' . $db->quoteName('js.object_id') . ' = ' . 
+						$db->quoteName('jo.object_id') . ' AND ' . $db->quoteName('js.object_group') . ' = ' . $db->quoteName('jo.object_group'));
+				$query->where($db->quoteName('js.object_group') . ' = ' . $db->Quote($object_group));
+				$query->where($db->quoteName('js.object_id') . ' = ' . intval($object_id));
+				$query->where($db->quoteName('js.published') . ' = ' . 1);
+				if (JCommentsMultilingual::isEnabled()) {
+					$query->where($db->quoteName('js.lang') . ' = ' . $db->Quote($lang));
+					$query->where($db->quoteName('jo.lang') . ' = ' . $db->Quote($lang));
+				}
+
 				$db->setQuery($query);
 				$subscribers = $db->loadObjectList();
 				break;

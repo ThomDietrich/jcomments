@@ -1,4 +1,4 @@
-INSERT INTO `#__jcomments_settings` VALUES 
+INSERT INTO #__jcomments_settings VALUES 
 ('', '', 'enable_username_check', '1'),
 ('', '', 'username_maxlength', '20'),
 ('', '', 'forbidden_names', 'administrator,moderator'),
