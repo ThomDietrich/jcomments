@@ -237,21 +237,6 @@ class JCommentsAJAX
 							$response->addScript("jcomments.clear('captcha');");
 							return $response;
 						}
-					} else if ($captchaEngine == 'recaptcha') {
-						$post = JRequest::get('post');
-						//$post = JFactory::getApplication()->input->post;
-						JPluginHelper::importPlugin('captcha');
-						$dispatcher = JDispatcher::getInstance();
-						//$dispatcher = JEventDispatcher::getInstance();
-						$res = $dispatcher->trigger('onCheckAnswer',$post['recaptcha_response_field']);
-						if(!$res[0]){
-						//	die('Invalid Captcha');
-							self::showErrorMessage(JText::_('ERROR_CAPTCHA'), 'captcha');
-							$response->addScript("Recaptcha.reload()");
-							return $response;
-						} else {
-							$response->addScript("Recaptcha.reload()");
-						}
 					} else {
 						$result = JCommentsEventHelper::trigger('onJCommentsCaptchaVerify', array($values['captcha_refid'], &$response));
 						// if all plugins returns false
@@ -797,7 +782,6 @@ class JCommentsAJAX
 	public static function updateCommentsList(&$response, $object_id, $object_group, $page)
 	{
 		$config = JCommentsFactory::getConfig();
-
 		if ($config->get('template_view') == 'tree') {
 			$html = JComments::getCommentsTree($object_id, $object_group, $page);
 			$html = JCommentsText::jsEscape($html);
@@ -913,15 +897,14 @@ class JCommentsAJAX
 		$id = (int) $id;
 		$value = (int) $value;
 		$value = ($value > 0) ? 1 : -1;
-
 		$ip = $acl->getUserIP();
 
-		$query = 'SELECT COUNT(*) FROM `#__jcomments_votes` WHERE commentid = ' . $id;
+		$query = "SELECT COUNT(*) FROM #__jcomments_votes WHERE commentid = " . $id;
 
 		if ($acl->getUserId()) {
 			$query .= ' AND userid = ' . $acl->getUserId();
 		} else {
-			$query .= ' AND userid = 0 AND ip = "' . $ip . '"';
+			$query .= ' AND userid = 0 AND ip = ' . $ip;
 		}
 		$db->setQuery($query);
 		$voted = $db->loadResult();
@@ -931,7 +914,6 @@ class JCommentsAJAX
 
 			if ($comment->load($id)) {
 				if ($acl->canVote($comment)) {
-
 					$result = JCommentsEventHelper::trigger('onJCommentsCommentBeforeVote', array(&$comment, &$value));
 
 					if (!in_array(false, $result, true)) {
@@ -943,8 +925,8 @@ class JCommentsAJAX
 						}
 						$comment->store();
 
-						$query = "INSERT INTO `#__jcomments_votes`(`commentid`,`userid`,`ip`,`date`,`value`)"
-							. "VALUES('".$comment->id."', '".$acl->getUserId()."','".$db->escape($ip)."', now(), ".$value.")";
+						$query = "INSERT INTO #__jcomments_votes(commentid,userid,ip,date,value)"
+							. "VALUES('.$comment->id.', '.$acl->getUserId().','.$db->escape($ip).', now(), ".$value.")";
 						$db->setQuery($query);
 						$db->execute();
 
@@ -997,7 +979,7 @@ class JCommentsAJAX
 			}
 		}
 
-		$query = 'SELECT COUNT(*) FROM `#__jcomments_reports` WHERE commentid = ' . $id;
+		$query = "SELECT COUNT(*) FROM #__jcomments_reports WHERE commentid = " . $id;
 		if ($acl->getUserId()) {
 			$query .= ' AND userid = ' . $acl->getUserId();
 		} else {
@@ -1009,7 +991,7 @@ class JCommentsAJAX
 		if (!$reported) {
 			$maxReportsPerComment = $config->getInt('reports_per_comment', 1);
 			$maxReportsBeforeUnpublish = $config->getInt('reports_before_unpublish', 0);
-			$db->setQuery('SELECT COUNT(*) FROM `#__jcomments_reports` WHERE commentid = ' . $id);
+			$db->setQuery("SELECT COUNT(*) FROM #__jcomments_reports WHERE commentid = " . $id);
 			$reported = $db->loadResult();
 			if ($reported < $maxReportsPerComment || $maxReportsPerComment == 0) {
 				$comment = JTable::getInstance('Comment', 'JCommentsTable');
