@@ -281,17 +281,43 @@ class JCommentsModelSettings extends JCommentsModelForm
 						$query->where($this->_db->quoteName('name') . '=' . $this->_db->quote($key));
 
 						$this->_db->setQuery($query);
-						$this->_db->execute();
+						try
+						{
+							$this->_db->execute();
+						}
+						catch (RuntimeException $e)
+						{
+							$this->setError($e->getMessage());
+							return false;
+						}
 					} else {
 						$query = $this->_db->getQuery(true);
-						$query->insert($this->_db->quoteName('#__jcomments_settings'));
-						$query->set($this->_db->quoteName('value') . '=' . $this->_db->quote($value));
-						$query->set($this->_db->quoteName('component') . '=' . $this->_db->quote(''));
-						$query->set($this->_db->quoteName('lang') . '=' . $this->_db->quote($language));
-						$query->set($this->_db->quoteName('name') . '=' . $this->_db->quote($key));
+						$query->clear()
+							->insert($this->_db->quoteName("#__jcomments_settings"))
+							->columns(
+								array(
+									$this->_db->quoteName('value'),
+									$this->_db->quoteName('component'),
+									$this->_db->quoteName('lang'),
+									$this->_db->quoteName('name')
+								))
+							->values(
+									$this->_db->quote($value) . ', '
+									. $this->_db->quote('') . ', '
+									. $this->_db->quote($language) . ', '
+									. $this->_db->quote($key)
+							);
 
 						$this->_db->setQuery($query);
-						$this->_db->execute();
+						try
+						{
+							$this->_db->execute();
+						}
+						catch (RuntimeException $e)
+						{
+							$this->setError($e->getMessage());
+							return false;
+						}
 					}
 				}
 			}
