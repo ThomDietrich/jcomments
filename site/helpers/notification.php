@@ -359,8 +359,9 @@ class JCommentsNotificationHelper
 				$query = $db->getQuery(true);
 				$query->select('DISTINCT js.name, js.email, js.hash, js.userid');
 				$query->from($db->quoteName('#__jcomments_subscriptions') . ' AS js');
-				$query->join('LEFT', $db->quoteName('#__jcomments_objects', 'jo') . ' ON ' . $db->quoteName('js.object_id') . ' = ' . 
-						$db->quoteName('jo.object_id') . ' AND ' . $db->quoteName('js.object_group') . ' = ' . $db->quoteName('jo.object_group'));
+				$query->join('INNER', $db->quoteName('#__jcomments_objects', 'jo') . ' ON ' . 
+						$db->quoteName('js.object_id') . ' = ' . $db->quoteName('jo.object_id') . ' AND ' . 
+					     	$db->quoteName('js.object_group') . ' = ' . $db->quoteName('jo.object_group'));
 				$query->where($db->quoteName('js.object_group') . ' = ' . $db->Quote($object_group));
 				$query->where($db->quoteName('js.object_id') . ' = ' . intval($object_id));
 				$query->where($db->quoteName('js.published') . ' = ' . 1);
