@@ -16,7 +16,7 @@ defined('_JEXEC') or die;
  */
 class JCommentsCustomBBCode
 {
-	var $codes = array();
+	var $this->codes = array();
 	var $patterns = array();
 	var $filter_patterns = array();
 	var $html_replacements = array();
@@ -40,10 +40,10 @@ class JCommentsCustomBBCode
 		$query->order($db->escape('ordering'));
 		$db->setQuery($query);
 
-		$codes = $db->loadObjectList();
+		$this->codes = $db->loadObjectList();
 
-		if (count($codes)) {
-			foreach ($codes as $code) {
+		if (count($this->codes)) {
+			foreach ($this->codes as $code) {
 
 				// fix \w pattern issue for UTF-8 encoding
 				// details: http://www.phpwact.org/php/i18n/utf-8#w_w_b_b_meta_characters
