@@ -167,10 +167,12 @@ class JCommentsTableComment extends JTable
 
 		if ($result) {
 			// process nested comments (threaded mode)
-			$query = "SELECT id, parent"
-				. "\n FROM #__jcomments"
-				. "\n WHERE `object_group` = " . $this->_db->Quote($this->object_group)
-				. "\n AND `object_id`= " . $this->object_id;
+			$query = $this->_db->getQuery(true);
+			$query->select('id, parent');
+			$query->from($this->_db->quoteName('#__jcomments'));
+			$query->where($this->_db->quoteName('object_group') . ' = ' . $this->_db->Quote($this->object_group));
+			$query->where($this->_db->quoteName('object_id') . ' = ' . $this->object_id);
+
 			$this->_db->setQuery($query);
 			$rows = $this->_db->loadObjectList();
 
